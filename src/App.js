@@ -85,7 +85,7 @@ class PlaylistCounter extends Component {
   render() {
     return (
       <div style={{...defaultStyle, display: 'inline-block', width: '40%'}}>
-        <h2 style={defaultStyle}>{this.props.playlists.length} text</h2>
+        <h2 style={defaultStyle}>{this.props.playlists.length} playlists</h2>
       </div>
     )
   }
@@ -111,9 +111,9 @@ class HoursCounter extends Component {
 class Filter extends Component {
   render() {
     return (
-      <div style={{...defaultStyle, 'font-size': '54px'}}>
-        <input type="text"/>
-
+      <div style={{...defaultStyle, fontSize: '54px'}}>
+        <img />
+        <input type="text" onKeyUp={event => this.props.onTextChange(event.target.value)}/>
       </div>
     );
   }
@@ -139,7 +139,10 @@ class Playlist extends Component {
 class App extends Component {
   constructor() {
     super();
-    this.state = {serverData: {}};
+    this.state = {
+      serverData: {},
+      filterString: ''
+    };
   }
   componentDidMount() {
     setTimeout(() => {
@@ -147,17 +150,24 @@ class App extends Component {
     }, 1000);
   }
   render() {
+    let playlistsToRender = this.state.serverData.user ? 
+      this.state.serverData.user.playlists.filter(playlist => 
+        playlist.name.toLowerCase().includes(this.state.filterString.toLowerCase())  
+      )
+      :
+      [];
     return (
       <div className="App">
         {
           this.state.serverData.user ?
           <div>
             <h1 style={defaultStyle}>{this.state.serverData.user.name}'s Playlist</h1>
-            <PlaylistCounter playlists={this.state.serverData.user.playlists}/>
-            <HoursCounter playlists={this.state.serverData.user.playlists}/>
-            <Filter/>
+            <PlaylistCounter playlists={playlistsToRender}/>
+            <HoursCounter playlists={playlistsToRender}/>
+            <Filter onTextChange={text => this.setState({filterString: text})}/>
             {
-              this.state.serverData.user.playlists.map(playlist => 
+              
+              playlistsToRender.map(playlist => 
                 <Playlist playlist={playlist} />
               )
 
