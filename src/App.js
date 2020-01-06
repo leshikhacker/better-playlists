@@ -27,7 +27,7 @@ class HoursCounter extends Component {
 
     return (
       <div style={{...defaultStyle, display: 'inline-block', width: '40%'}}>
-        <h2 style={defaultStyle}>{Math.round(totalDuration / 60)} hours</h2>
+        <h2 style={defaultStyle}>{(totalDuration / 3600).toFixed(2)} hours</h2>
       </div>
     )
   }
@@ -89,14 +89,45 @@ class App extends Component {
     fetch('https://api.spotify.com/v1/me/playlists', {
       headers: headers
     }).then(response => response.json())
-    .then(data => this.setState({
-        playlists: data.items.map(item => ({
-          name: item.name, 
-          imageUrl: item.images[0].url,
-          songs: []
-        }))
-      })
-    )
+    .then(playlistData => {
+      let playlists = playlistData.items;
+      let trackDataPromises = playlists.map(playlist => {
+        let responsePromise = fetch(playlist.tracks.href, {headers: headers});
+        let trackDataPromise = responsePromise.then(response => response.json());
+        return trackDataPromise;
+      });
+
+      let allTracksDatasPromises = Promise.all(trackDataPromises);
+      
+      let playlistPromise = allTracksDatasPromises.then(trackDatas => {
+        trackDatas.forEach((trackData, i) => {
+          playlists[i].trackDatas = trackData.items
+          .map(
+            item => item.track
+          )
+          .map(trackData => ({
+            name: trackData.name,
+            duration: trackData.duration_ms / 1000
+          }));
+        });
+        return playlists;
+      });
+
+      return playlistPromise;
+    })
+    .then(playlists => 
+      this.setState({
+      playlists: playlists.map(item => ({
+        name: item.name, 
+        imageUrl: item.images[0].url,
+        songs: item.trackDatas.slice(0, 3).map(trackData => (
+          {
+            name: trackData.name,
+            duration: trackData.duration
+          }
+        ))
+      }))
+    }))
   }
   render() {
     let playlistsToRender = this.state.user && this.state.playlists ? 
@@ -113,7 +144,7 @@ class App extends Component {
             <h1 style={defaultStyle}>{this.state.user.name}'s Playlist</h1>
               
             <PlaylistCounter playlists={playlistsToRender}/>
-            {/* <HoursCounter playlists={playlistsToRender}/> */}
+            <HoursCounter playlists={playlistsToRender}/>
             <Filter onTextChange={text => this.setState({filterString: text})}/>
             {
               
