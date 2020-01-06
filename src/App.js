@@ -1,15 +1,27 @@
 import React, { Component } from 'react';
+import 'reset-css/reset.css';
 import './App.css';
 import queryString from 'query-string';
 
 let defaultStyle = {
-  color: '#fff'
+  color: '#fff',
+  fontFamily: 'Papyrus'
+};
+
+let counterStyle = {...defaultStyle,
+  display: 'inline-block', 
+  width: '40%',
+  marginBottom: '20px',
+  fontSize: '20px',
+  lineHeight: '30px'
 };
 
 class PlaylistCounter extends Component {
   render() {
+    let playlistCounterStyle = counterStyle;
+
     return (
-      <div style={{...defaultStyle, display: 'inline-block', width: '40%'}}>
+      <div style={playlistCounterStyle}>
         <h2 style={defaultStyle}>{this.props.playlists.length} playlists</h2>
       </div>
     )
@@ -24,10 +36,18 @@ class HoursCounter extends Component {
     let totalDuration = allSongs.reduce((sum, eachSong) => {
       return sum + eachSong.duration;
     }, 0);
-
+    let totalDurationHours = totalDuration / 3600;
+    
+    let isTooLow = totalDurationHours < 10;
+    console.log(isTooLow);
+    
+    let hoursCounterStyle = {...counterStyle, 
+      color: isTooLow ? 'red' : 'white',
+      fontWeight: isTooLow ? 'bold' : 'normal'
+    };
     return (
-      <div style={{...defaultStyle, display: 'inline-block', width: '40%'}}>
-        <h2 style={defaultStyle}>{(totalDuration / 3600).toFixed(2)} hours</h2>
+      <div style={hoursCounterStyle}>
+        <h2>{(totalDurationHours).toFixed(2)} hours</h2>
       </div>
     )
   }
@@ -36,9 +56,11 @@ class HoursCounter extends Component {
 class Filter extends Component {
   render() {
     return (
-      <div style={{...defaultStyle, fontSize: '54px'}}>
-        <img src/>
-        <input type="text" onKeyUp={event => this.props.onTextChange(event.target.value)}/>
+      <div style={{...defaultStyle}}>
+        <input type="text" 
+          onKeyUp={event => this.props.onTextChange(event.target.value)}
+          style={{...defaultStyle, color: 'black', fontSize: '20px', padding: '10px', marginBottom: '10px'}}
+          />
       </div>
     );
   }
@@ -48,12 +70,18 @@ class Playlist extends Component {
   render() {
     let playlist = this.props.playlist;
     return (
-      <div style={{...defaultStyle, display: 'inline-block', width: '25%'}}>
-        <img src={playlist.imageUrl} style={{width: '60px'}} />
+      <div style={{...defaultStyle, 
+        display: 'inline-block', 
+        width: '25%',
+        padding: '10px',
+        backgroundColor: this.props.index % 2 ? '#C0C0C0' : '#808080  '
+
+      }}>
         <h3>{playlist.name}</h3>
-        <ul>
+        <img src={playlist.imageUrl} style={{width: '60px'}} />
+        <ul style={{marginTop: '10px', fontWeight: 'bold'}}>
           {playlist.songs.map(song => 
-            <li>{song.name}</li>
+            <li style={{paddingTop: '2px'}}>{song.name}</li>
           )}
         </ul>
       </div>
@@ -146,15 +174,19 @@ class App extends Component {
         {
           this.state.user ?
           <div>
-            <h1 style={defaultStyle}>{this.state.user.name}'s Playlist</h1>
-              
+            <h1 style={{
+              ...defaultStyle, 
+              fontSize: '54px', 
+              marginTop: '5px'}}>
+                {this.state.user.name}'s Playlist
+            </h1>
             <PlaylistCounter playlists={playlistsToRender}/>
             <HoursCounter playlists={playlistsToRender}/>
             <Filter onTextChange={text => this.setState({filterString: text})}/>
             {
               
-              playlistsToRender.map(playlist => 
-                <Playlist playlist={playlist} />
+              playlistsToRender.map((playlist, i) => 
+                <Playlist playlist={playlist} index={i} />
               )
             }            
           </div> : 
